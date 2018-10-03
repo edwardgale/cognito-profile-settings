@@ -1,0 +1,35 @@
+{% extends "template.njk" %}
+
+{% from "input/macro.njk" import govukInput %}
+{% from "fieldset/macro.njk" import govukFieldset %}
+
+{% block content %}
+
+{% call govukFieldset({
+    legend: {
+        text: "Logon to RAV web?",
+        classes: "govuk-fieldset__legend--xl",
+        isPageHeading: true
+    }
+}) %}
+
+    {{ govukInput({
+        label: {
+            text: "Username"
+        },
+        classes: "govuk-!-width-two-thirds",
+        id: "username",
+        name: "username"
+    }) }}
+
+    {{ govukInput({
+        label: {
+            text: "Password"
+        },
+        classes: "govuk-!-width-two-thirds",
+        id: "password",
+        name: "password"
+    }) }}
+
+{% endcall %}
+{% endblock %}

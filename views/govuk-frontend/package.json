@@ -1,0 +1,56 @@
+{
+  "_from": "govuk-frontend",
+  "_id": "govuk-frontend@1.3.0",
+  "_inBundle": false,
+  "_integrity": "sha512-NROJGh4wZgOSWhEzJOkcijIMR7GeFBOinG45wouVwK7ne6ihR4uyS/LQBkG/GGEkNkLZYuOG8cb+6fMVwP2W7Q==",
+  "_location": "/govuk-frontend",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "tag",
+    "registry": true,
+    "raw": "govuk-frontend",
+    "name": "govuk-frontend",
+    "escapedName": "govuk-frontend",
+    "rawSpec": "",
+    "saveSpec": null,
+    "fetchSpec": "latest"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/govuk-frontend/-/govuk-frontend-1.3.0.tgz",
+  "_shasum": "b145d8c5d6bd7e88a5b34b340867799f328bbb03",
+  "_spec": "govuk-frontend",
+  "_where": "/Users/ed/work/apiprojects/cognito-hosted-ui-wrapper/server/src/playarea/nunjucks",
+  "author": {
+    "name": "GOV.UK Design System Team",
+    "email": "design-system-developers@digital.cabinet-office.gov.uk",
+    "url": "Government Digital Service"
+  },
+  "bugs": {
+    "url": "https://github.com/alphagov/govuk-frontend/issues"
+  },
+  "bundleDependencies": false,
+  "deprecated": false,
+  "description": "GOV.UK Frontend contains the code you need to start building a user interface for government platforms and services.",
+  "engines": {
+    "node": ">= 4.2.0"
+  },
+  "homepage": "https://github.com/alphagov/govuk-frontend#readme",
+  "keywords": [
+    "govuk",
+    "frontend",
+    "design system",
+    "template"
+  ],
+  "license": "MIT",
+  "main": "all.js",
+  "name": "govuk-frontend",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alphagov/govuk-frontend.git"
+  },
+  "sass": "all.scss",
+  "version": "1.3.0"
+}
