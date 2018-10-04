@@ -14,26 +14,26 @@ const OAuth2Strategy = require('passport-oauth').OAuth2Strategy;
 nunjucks.configure([
     path.resolve(__dirname + ''),
     path.resolve(__dirname + '/views'),
-    path.resolve(__dirname + '/govuk-frontend'),
-    path.resolve(__dirname + '/govuk-frontend/components'),
+    path.resolve(__dirname + '/views/govuk-frontend'),
+    path.resolve(__dirname + '/views/govuk-frontend/components'),
 ], {
     autoescape: true,
     express: app
 });
 
-passport.use('provider', new OAuth2Strategy({
-    authorizationURL: 'https://www.provider.com/oauth2/authorize',
-    tokenURL: 'https://www.provider.com/oauth2/token',
-    clientID: '123-456-789',
-    clientSecret: 'shhh-its-a-secret'
-    callbackURL: 'https://www.example.com/auth/provider/callback'
-  },
-  function(accessToken, refreshToken, profile, done) {
-    User.findOrCreate(..., function(err, user) {
-      done(err, user);
-    });
-  }
-));
+// passport.use('provider', new OAuth2Strategy({
+//     authorizationURL: 'https://www.provider.com/oauth2/authorize',
+//     tokenURL: 'https://www.provider.com/oauth2/token',
+//     clientID: '123-456-789',
+//     clientSecret: 'shhh-its-a-secret',
+//     callbackURL: 'https://www.example.com/auth/provider/callback'
+//   },
+//   function(accessToken, refreshToken, profile, done) {
+//     User.findOrCreate(..., function(err, user) {
+//       done(err, user);
+//     });
+//   }
+// ));
 
 app.get('/auth/provider', passport.authenticate('provider'));
 
@@ -65,6 +65,11 @@ router.get('/', (req, res) => {
 router.get('/sam', (req, res) => {
   res.sendFile(`${__dirname}/sam-logo.png`)
 })
+
+router.get('/changePassword', (req, res) => {
+    res.render('changePassword', {
+        apiUrl: req.apiGateway ? `https://${req.apiGateway.event.headers.Host}/${req.apiGateway.event.requestContext.stage}` : 'http://localhost:3000'
+    })})
 
 // router.get('/users', (req, res) => {
 //   res.json(users)
