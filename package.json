@@ -11,7 +11,7 @@
     "accountId": "002805741656"
   },
   "scripts": {
-    "start": "node app.local.js",
+    "start": "nodemon -e js,njk app.local.js",
     "config": "node ./scripts/configure.js",
     "deconfig": "node ./scripts/deconfigure.js",
     "local": "node scripts/local",
@@ -40,11 +40,13 @@
     "aws-serverless-express": "^3.3.3",
     "body-parser": "^1.17.1",
     "compression": "^1.6.2",
+    "cookie-session": "^2.0.0-beta.3",
     "cors": "^2.8.3",
     "express": "^4.15.2",
     "nunjucks": "^3.1.3",
     "passport": "^0.4.0",
     "passport-oauth": "^1.0.0",
+    "passport-oauth2-cognito": "^0.1.0",
     "pug": "^2.0.0-rc.1"
   }
 }

@@ -8,7 +8,11 @@ const awsServerlessExpressMiddleware = require('aws-serverless-express/middlewar
 const app = express()
 const router = express.Router()
 const nunjucks = require('nunjucks');
-const passport = require('passport')
+const passport = require('passport');
+const OAuth2CognitoStrategy = require('passport-oauth2-cognito');
+const cookieSession = require('cookie-session');
+
+
 const OAuth2Strategy = require('passport-oauth').OAuth2Strategy;
 
 nunjucks.configure([
@@ -20,25 +24,61 @@ nunjucks.configure([
     autoescape: true,
     express: app
 });
-
-// passport.use('provider', new OAuth2Strategy({
-//     authorizationURL: 'https://www.provider.com/oauth2/authorize',
-//     tokenURL: 'https://www.provider.com/oauth2/token',
-//     clientID: '123-456-789',
-//     clientSecret: 'shhh-its-a-secret',
-//     callbackURL: 'https://www.example.com/auth/provider/callback'
-//   },
-//   function(accessToken, refreshToken, profile, done) {
-//     User.findOrCreate(..., function(err, user) {
-//       done(err, user);
-//     });
-//   }
-// ));
-
-app.get('/auth/provider', passport.authenticate('provider'));
-
 app.set('view engine', 'njk');
-// app.set('view engine', 'pug')
+
+
+const options = {
+    callbackURL: 'https://auw1xbwwy4.execute-api.eu-west-1.amazonaws.com/prod/auth/cognito/callback',
+    clientDomain: 'https://api3.galesoftware.net',
+    clientID: '5kluu0kr96sj93g78h8fueqhuq',
+    // clientSecret: 'shhh-its-a-secret',
+    region: 'eu-west-1'
+};
+
+
+function verify(accessToken, refreshToken, profile, done) {
+    console.log(`Callback from the call to verify ${accessToken}, ${JSON.stringify(profile)}`);
+
+
+
+    done(null, profile);
+
+    // User.findOrCreate(profile, (err, user) => {
+    //     console.log('returning from user');
+    //     done(err, user);
+    // });
+}
+
+
+app.use(cookieSession({
+    name: 'session2',
+    keys: [''],
+
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}));
+
+app.use(passport.initialize());
+
+passport.use(new OAuth2CognitoStrategy(options, verify));
+
+passport.serializeUser((user, done) => {
+    console.log('user is in serialize' + JSON.stringify(user));
+    return done(null, user);
+});
+// passport.deserializeUser((obj, done) => done(null, obj));
+
+
+app.get('/auth/cognito/callback',
+    passport.authenticate('oauth2-cognito'),
+    function(req, res) {
+        // Successful authentication, redirect home.
+        console.log('successful authentication ' + JSON.stringify(req.session));
+        res.redirect('/prod');
+    });
+
+    // (req,res) => res.send(req.user)
+// );
+
 
 if (process.env.NODE_ENV === 'test') {
   // NOTE: aws-serverless-express uses this app for its integration tests
@@ -56,6 +96,10 @@ router.use(awsServerlessExpressMiddleware.eventContext())
 // NOTE: tests can't find the views directory without this
 app.set('views', path.join(__dirname, 'views'))
 
+router.get('/auth/cognito',
+    passport.authenticate('oauth2-cognito')
+);
+
 router.get('/', (req, res) => {
   res.render('index', {
     apiUrl: req.apiGateway ? `https://${req.apiGateway.event.headers.Host}/${req.apiGateway.event.requestContext.stage}` : 'http://localhost:3000'
@@ -66,67 +110,28 @@ router.get('/sam', (req, res) => {
   res.sendFile(`${__dirname}/sam-logo.png`)
 })
 
+router.get('/sam1', function (req, res, next) {
+    req.session.views = (req.session.views || 0) + 1
+    res.end(req.session.views + ' views!')
+})
+
 router.get('/changePassword', (req, res) => {
     res.render('changePassword', {
         apiUrl: req.apiGateway ? `https://${req.apiGateway.event.headers.Host}/${req.apiGateway.event.requestContext.stage}` : 'http://localhost:3000'
     })})
 
-// router.get('/users', (req, res) => {
-//   res.json(users)
-// })
-//
-// router.get('/users/:userId', (req, res) => {
-//   const user = getUser(req.params.userId)
-//
-//   if (!user) return res.status(404).json({})
-//
-//   return res.json(user)
-// })
-//
-// router.post('/users', (req, res) => {
-//   const user = {
-//     id: ++userIdCounter,
-//     name: req.body.name
-//   }
-//   users.push(user)
-//   res.status(201).json(user)
-// })
-//
-// router.put('/users/:userId', (req, res) => {
-//   const user = getUser(req.params.userId)
-//
-//   if (!user) return res.status(404).json({})
-//
-//   user.name = req.body.name
-//   res.json(user)
-// })
-//
-// router.delete('/users/:userId', (req, res) => {
-//   const userIndex = getUserIndex(req.params.userId)
-//
-//   if (userIndex === -1) return res.status(404).json({})
-//
-//   users.splice(userIndex, 1)
-//   res.json(users)
-// })
-//
-// const getUser = (userId) => users.find(u => u.id === parseInt(userId))
-// const getUserIndex = (userId) => users.findIndex(u => u.id === parseInt(userId))
-//
-// // Ephemeral in-memory data store
-// const users = [{
-//   id: 1,
-//   name: 'Joe'
-// }, {
-//   id: 2,
-//   name: 'Jane'
-// }]
-// let userIdCounter = users.length
-//
+router.get('/profile', (req, res) => {
+    res.render('profile', {
+        apiUrl: req.apiGateway ? `https://${req.apiGateway.event.headers.Host}/${req.apiGateway.event.requestContext.stage}` : 'http://localhost:3000'
+    })})
+
+
 // // The aws-serverless-express library creates a server and listens on a Unix
 // // Domain Socket for you, so you can remove the usual call to app.listen.
 // // app.listen(3000)
+
 app.use('/', router)
+
 //
 // Export your express server so you can import it in the lambda function.
 module.exports = app

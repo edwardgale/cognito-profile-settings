@@ -1,0 +1,43 @@
+{% extends "./govuk-frontend/template.njk" %}
+
+{% from "input/macro.njk" import govukInput %}
+{% from "fieldset/macro.njk" import govukFieldset %}
+{% from "button/macro.njk" import govukButton %}
+
+{% block content %}
+
+<form action="/changePassword" method="POST" name="changePasswordForm" >
+
+    {% call govukFieldset({
+        legend: {
+            text: "Profile",
+            classes: "govuk-fieldset__legend--xl",
+            isPageHeading: true
+        }
+    }) %}
+
+        {{ govukInput({
+            id: "_code",
+            name: "_code",
+            type: "hidden",
+            value: _code
+        }) }}
+
+        {{ govukInput({
+            label: {
+                text: "Username"
+            },
+            classes: "govuk-!-width-two-thirds",
+            id: "username",
+            name: "username",
+            type: "text"
+        }) }}
+
+        {{ govukButton({
+            text: "Change Password"
+        }) }}
+
+    {% endcall %}
+</form>
+
+{% endblock %}
