@@ -15,23 +15,16 @@
             isPageHeading: true
         }
     }) %}
+        <p class="govuk-body-l">Please find details here regarding your account</p>
 
-        {{ govukInput({
-            id: "_code",
-            name: "_code",
-            type: "hidden",
-            value: _code
-        }) }}
+        <p class="govuk-body-l">Organisation</p>
 
-        {{ govukInput({
-            label: {
-                text: "Username"
-            },
-            classes: "govuk-!-width-two-thirds",
-            id: "username",
-            name: "username",
-            type: "text"
-        }) }}
+        <p class="govuk-body-l">Email here</p>
+
+        <p class="govuk-body-l">Phone here</p>
+
+        <p class="govuk-body-l">Change password here</p>
+
 
         {{ govukButton({
             text: "Change Password"
