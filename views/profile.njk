@@ -17,19 +17,24 @@
     }) %}
         <p class="govuk-body-l">Please find details here regarding your account</p>
 
-        <p class="govuk-body-l">Organisation</p>
+        <p class="govuk-body-l">{{ org }}</p>
 
-        <p class="govuk-body-l">Email here</p>
+        <p class="govuk-body-l" id="{{ email }}">{{ email }}</p>
 
-        <p class="govuk-body-l">Phone here</p>
+        <p class="govuk-body-l">{{ phone_number }}</p>
 
         <p class="govuk-body-l">Change password here</p>
 
 
         {{ govukButton({
-            text: "Change Password"
+            text: "Change Password",
+            href: "/changePassword"
         }) }}
 
+        {{ govukButton({
+            text: "Logout",
+            href: "/logout"
+        }) }}
     {% endcall %}
 </form>
 

@@ -11,32 +11,58 @@ const nunjucks = require('nunjucks');
 const passport = require('passport');
 const OAuth2CognitoStrategy = require('passport-oauth2-cognito');
 const cookieSession = require('cookie-session');
-const cookieParser = require('cookie-parser');
 const JwtStrategy = require('passport-jwt').Strategy;
 const ExtractJwt = require('passport-jwt').ExtractJwt;
+const jwksClient = require('jwks-rsa');
+const jwt = require('jsonwebtoken');
 
 
-
-const cookieExtractor = () => {
+const accessTokenExtractor = () => {
     return function (req) {
-        var token = null;
-        if (req && req.session)
-        {
-            token = req.session['jwt'];
-        }
-        return token;
+       return req.user.accessToken;
     };
+};
+
+const isAuthenticated = function(req, res, next) {
+    if (req.isAuthenticated()) {
+        return next();
+    } else {
+        return res.redirect('/login');
+    }
 };
 
 const getPublicKey = () => {
     return function (req) {
+        const token = accessTokenExtractor();
+        const decodedToken = jwt.decode(token);
+
+        const iss = decodedToken.iss;
+        const options ={};
+        options.jwksUri = iss;
+        const client = jwksClient(options);
+        const kid = 'RkI5MjI5OUY5ODc1N0Q4QzM0OUYzNkVGMTJDOUEzQkFCOTU3NjE2Rg';
+        client.getSigningKey(kid, (err, key) => {
+            const signingKey = key.publicKey || key.rsaPublicKey;
+
+            // Now I can use this to configure my Express or Hapi middleware
+        });
+
         return 'adf';
     };
 };
 
 
+// authenticate the web token
+// 1. decode the accesss token
+// 2. get the issuer and make sure it matches the correct pattern
+// 3. if issuer matches then get the .well known address.
+// 4: use jwks-rsa to get the signing key (kid found in header of jwt).
+// 5: use signing key to validate the jwt.
+
+
+
 const opts = {}
-opts.jwtFromRequest = cookieExtractor();
+opts.jwtFromRequest = accessTokenExtractor();
 opts.secretOrKey = getPublicKey();
 // https://cognito-idp.eu-west-1.amazonaws.com/eu-west-1_q4XNRono4/.well-known/jwks.json
 opts.issuer = 'https://cognito-idp.eu-west-1.amazonaws.com/eu-west-1_q4XNRono4';
@@ -70,12 +96,12 @@ app.set('view engine', 'njk');
 const options = {
     // callbackURL: 'https://auw1xbwwy4.execute-api.eu-west-1.amazonaws.com/prod/auth/cognito/callback',
     callbackURL: 'http://localhost:3000/auth/cognito/callback',
+    logoutCallbackURL: 'http://localhost:3000/login',
     clientDomain: 'https://api3.galesoftware.net',
     clientID: '5kluu0kr96sj93g78h8fueqhuq',
     // clientSecret: 'shhh-its-a-secret',
     region: 'eu-west-1'
 };
-
 
 function verify(accessToken, refreshToken, profile, done) {
     console.log(`Callback from the call to verify ${accessToken}, ${JSON.stringify(profile)}`);
@@ -83,10 +109,9 @@ function verify(accessToken, refreshToken, profile, done) {
 }
 
 app.use(cookieSession({
-    name: 'session2',
-    keys: [''],
-
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    name: 'session',
+    keys: ['!bwjkslkekhdfjlk$'],
+    maxAge: 1 * 60 * 60 * 1000 // 1 hour
 }));
 
 app.use(passport.initialize());
@@ -100,8 +125,7 @@ passport.deserializeUser((obj, done) => {
     done(null, obj)
 });
 
-
-app.use(cookieParser(['']));
+app.use(passport.session());
 
 if (process.env.NODE_ENV === 'test') {
   // NOTE: aws-serverless-express uses this app for its integration tests
@@ -123,6 +147,7 @@ router.use((req, res, next)  => {
     console.log('cookie:', JSON.stringify(req.session));
     console.log('is authenticated:', JSON.stringify(req.isAuthenticated()));
     console.log('Cookies: ', req.cookies);
+    console.log('Uswer: ', req.user);
 
     // console.log('is user:', JSON.stringify(req.user()));
     next();
@@ -139,12 +164,10 @@ router.get('/login',
 );
 
 router.get('/logout', function(req, res){
-    console.log(JSON.stringify(req.session) + ' and the user is ');
     req.logout();
     console.log(JSON.stringify(req.session) + ' and the user is ');
-    res.redirect('/');
+    res.redirect(`${options.clientDomain}/logout?logout_uri=${options.logoutCallbackURL}&client_id=${options.clientID}`);
 });
-
 
 app.get('/auth/cognito/callback',
     passport.authenticate('oauth2-cognito'),
@@ -152,11 +175,8 @@ app.get('/auth/cognito/callback',
         // Successful authentication, redirect home.
         console.log('successful authentication ' + JSON.stringify(req.session));
         console.log('am i auth:  ' + req.isAuthenticated());
-        res.redirect('/');
+        res.redirect('/profile');
     });
-
-// (req,res) => res.send(req.user)
-// );
 
 router.get('/sam1', function (req, res, next) {
     req.session.views = (req.session.views || 0) + 1
@@ -169,11 +189,11 @@ router.get('/changePassword', (req, res) => {
         apiUrl: req.apiGateway ? `https://${req.apiGateway.event.headers.Host}/${req.apiGateway.event.requestContext.stage}` : 'http://localhost:3000'
     })})
 
-router.get('/profile',
+router.get('/profile', isAuthenticated,
     (req, res) => {
-
     res.render('profile', {
-        apiUrl: req.apiGateway ? `https://${req.apiGateway.event.headers.Host}/${req.apiGateway.event.requestContext.stage}` : 'http://localhost:3000'
+        email: req.user.email,
+        phone_number: req.user.phone_number
     })});
 
 
@@ -181,8 +201,8 @@ router.get('/profile',
 // // Domain Socket for you, so you can remove the usual call to app.listen.
 // // app.listen(3000)
 
-app.use('/', router)
+app.use('/', router);
 
 //
 // Export your express server so you can import it in the lambda function.
-module.exports = app
+module.exports = app;
