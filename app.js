@@ -1,20 +1,59 @@
 'use strict'
-const path = require('path')
-const express = require('express')
-const bodyParser = require('body-parser')
-const cors = require('cors')
-const compression = require('compression')
-const awsServerlessExpressMiddleware = require('aws-serverless-express/middleware')
-const app = express()
-const router = express.Router()
+const path = require('path');
+const express = require('express');
+const bodyParser = require('body-parser');
+const cors = require('cors');
+const compression = require('compression');
+const awsServerlessExpressMiddleware = require('aws-serverless-express/middleware');
+const app = express();
+const router = express.Router();
 const nunjucks = require('nunjucks');
 const passport = require('passport');
 const OAuth2CognitoStrategy = require('passport-oauth2-cognito');
+const OpenIDCognitoStrategy = require('./helpers/passport-cognito-openidconnect/lib/strategy');
 const cookieSession = require('cookie-session');
 const JwtStrategy = require('passport-jwt').Strategy;
 const ExtractJwt = require('passport-jwt').ExtractJwt;
 const jwksClient = require('jwks-rsa');
 const jwt = require('jsonwebtoken');
+
+
+
+passport.use(new OpenIDCognitoStrategy({
+        domain: 'https://api3.galesoftware.net',
+        clientID: '5kluu0kr96sj93g78h8fueqhuq',
+        clientSecret: process.env.AUTH0_CLIENT_SECRET,
+        callbackURL: 'http://localhost:3000/auth/cognito/callback'
+
+    },
+    function(issuer, audience, profile, cb) {
+        //not interested in passport profile normalization,
+        //just the Auth0's original profile that is inside the _json field
+        return cb(null, profile._json);
+    }));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 const accessTokenExtractor = () => {
@@ -66,20 +105,6 @@ opts.jwtFromRequest = accessTokenExtractor();
 opts.secretOrKey = getPublicKey();
 // https://cognito-idp.eu-west-1.amazonaws.com/eu-west-1_q4XNRono4/.well-known/jwks.json
 opts.issuer = 'https://cognito-idp.eu-west-1.amazonaws.com/eu-west-1_q4XNRono4';
-passport.use(new JwtStrategy(opts, function(jwt_payload, done) {
-    User.findOne({id: jwt_payload.sub}, function(err, user) {
-        if (err) {
-            return done(err, false);
-        }
-        if (user) {
-            return done(null, user);
-        } else {
-            return done(null, false);
-            // or you could create a new account
-        }
-    });
-}));
-
 
 nunjucks.configure([
     path.resolve(__dirname + ''),
