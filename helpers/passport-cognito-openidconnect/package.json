@@ -1,0 +1,25 @@
+{
+  "name": "cognito-auth0-openidconnect",
+  "version": "0.1.0",
+  "description": "Cognito authentication strategy for Passport.js based on OpenID Connect",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/edwardgale/passport-cognito-openidconnect"
+  },
+  "author": "auth0",
+  "license": "MIT",
+  "devDependencies": {
+    "mocha": "2.x.x",
+    "should": "^7.1.1"
+  },
+  "dependencies": {
+    "passport-openidconnect": "0.0.2",
+    "pkginfo": "^0.3.1",
+    "request": "^2.65.0",
+    "xtend": "^4.0.0"
+  }
+}
