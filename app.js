@@ -39,10 +39,8 @@ const jwt = require('jsonwebtoken');
 
 
 
-const accessTokenExtractor = () => {
-    return function (req) {
+const accessTokenExtractor = function (req, res) {
        return req.user.accessToken;
-    };
 };
 
 const isAuthenticated = function(req, res, next) {
@@ -53,25 +51,44 @@ const isAuthenticated = function(req, res, next) {
     }
 };
 
-const getPublicKey = () => {
-    return function (req) {
-        const token = accessTokenExtractor();
-        const decodedToken = jwt.decode(token);
-
-        const iss = decodedToken.iss;
+const isBlah = function(req, res, next) {
+    console.log('hello');
+        const token = accessTokenExtractor(req, res);
+        const decodedToken = jwt.decode(token, {complete: true});
+            const iss = decodedToken.iss;
         const options ={};
-        options.jwksUri = iss;
+        options.jwksUri = `${iss}/.well-known/jwks.json`;
+        options.cache = true;
+        options.rateLimit = true;
         const client = jwksClient(options);
-        const kid = 'RkI5MjI5OUY5ODc1N0Q4QzM0OUYzNkVGMTJDOUEzQkFCOTU3NjE2Rg';
+        const kid = 'kL9wvUP8Io6xp/h1MBOquivPpT2UfeVh06eQBaaaAV0=';
         client.getSigningKey(kid, (err, key) => {
             const signingKey = key.publicKey || key.rsaPublicKey;
-
             // Now I can use this to configure my Express or Hapi middleware
         });
 
-        return 'adf';
-    };
+    return next();
 };
+
+// const getPublicKey = () => {
+//     return function (req) {
+//         const token = accessTokenExtractor();
+//         const decodedToken = jwt.decode(token);
+//
+//         const iss = decodedToken.iss;
+//         const options ={};
+//         options.jwksUri = iss;
+//         const client = jwksClient(options);
+//         const kid = 'RkI5MjI5OUY5ODc1N0Q4QzM0OUYzNkVGMTJDOUEzQkFCOTU3NjE2Rg';
+//         client.getSigningKey(kid, (err, key) => {
+//             const signingKey = key.publicKey || key.rsaPublicKey;
+//
+//             // Now I can use this to configure my Express or Hapi middleware
+//         });
+//
+//         return 'adf';
+//     };
+// };
 
 
 // authenticate the web token
@@ -80,12 +97,6 @@ const getPublicKey = () => {
 // 3. if issuer matches then get the .well known address.
 // 4: use jwks-rsa to get the signing key (kid found in header of jwt).
 // 5: use signing key to validate the jwt.
-
-const opts = {}
-opts.jwtFromRequest = accessTokenExtractor();
-opts.secretOrKey = getPublicKey();
-// https://cognito-idp.eu-west-1.amazonaws.com/eu-west-1_q4XNRono4/.well-known/jwks.json
-opts.issuer = 'https://cognito-idp.eu-west-1.amazonaws.com/eu-west-1_q4XNRono4';
 
 nunjucks.configure([
     path.resolve(__dirname + ''),
@@ -155,7 +166,7 @@ router.use((req, res, next)  => {
     console.log('is authenticated:', JSON.stringify(req.isAuthenticated()));
     console.log('Cookies: ', req.cookies);
     console.log('Uswer: ', req.user);
-
+    console.log(isBlah(req, res, next));
     // console.log('is user:', JSON.stringify(req.user()));
     next();
 })
