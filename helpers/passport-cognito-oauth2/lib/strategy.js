@@ -59,7 +59,7 @@ const util = require('util')
  */
 
 function Strategy({clientDomain, clientID, clientSecret, callbackURL, passReqToCallback, region}, verify) {
-  const options = {
+  this.options = {
     authorizationURL: `${clientDomain}/oauth2/authorize`,
     userInfoURL: `${clientDomain}/oauth2/userInfo`,
       tokenURL: `${clientDomain}/oauth2/token`,
@@ -69,7 +69,7 @@ function Strategy({clientDomain, clientID, clientSecret, callbackURL, passReqToC
     passReqToCallback
   };
 
-  OAuth2Strategy.call(this, options, verify);
+  OAuth2Strategy.call(this, this.options, verify);
   
   AWS.config.region = region;
   
@@ -89,26 +89,41 @@ util.inherits(Strategy, OAuth2Strategy);
  * @param {Function} done
  * @api protected
  */
+// Strategy.prototype.userProfile = function(accessToken, done) {
+//
+//   this.cognitoClient.getUser({AccessToken: accessToken}, (err, userData) => {
+//     if (err) {
+//       return done(err, null);
+//     }
+//
+//     const profile = {};
+//
+//     for (let i = 0; i < userData.UserAttributes.length; i++) {
+//       const a = userData.UserAttributes[i];
+//       profile[a.Name] = a.Value;
+//     }
+//       profile.accessToken = accessToken;
+//
+//     done(null, profile);
+//   });
+//
+// }
+
+
 Strategy.prototype.userProfile = function(accessToken, done) {
-  
-  this.cognitoClient.getUser({AccessToken: accessToken}, (err, userData) => {
-    if (err) {
-      return done(err, null);
-    }
+    this._oauth2.get(this.options.userInfoURL, accessToken, function (err, body, res) {
+        if (err) { return done(new Error('failed to fetch user profile', err)); }
 
-    const profile = {};
+        try {
+            var json = JSON.parse(body);
+            var profile = new Profile(json, body);
 
-    for (let i = 0; i < userData.UserAttributes.length; i++) {
-      const a = userData.UserAttributes[i];
-      profile[a.Name] = a.Value;
-    }
-      profile.accessToken = accessToken;
-
-    done(null, profile);
-  });
-  
-}
-
+            done(null, profile);
+        } catch(e) {
+            done(e);
+        }
+    });
+};
 
 /**
  * Expose `Strategy`.

@@ -9,7 +9,8 @@ const app = express();
 const router = express.Router();
 const nunjucks = require('nunjucks');
 const passport = require('passport');
-const OAuth2CognitoStrategy = require('passport-oauth2-cognito');
+// const OAuth2CognitoStrategy = require('passport-oauth2-cognito');
+const OAuth2CognitoStrategy = require('./helpers/passport-cognito-oauth2/lib/strategy');
 const OpenIDCognitoStrategy = require('./helpers/passport-cognito-openidconnect/lib/strategy');
 const cookieSession = require('cookie-session');
 const JwtStrategy = require('passport-jwt').Strategy;
@@ -18,39 +19,20 @@ const jwksClient = require('jwks-rsa');
 const jwt = require('jsonwebtoken');
 
 
-app.use(passport.initialize());
 
-passport.use(new OpenIDCognitoStrategy({
-        domain: 'api3.galesoftware.net',
-        clientID: '1jn4n0sc7i3733mbn5rjfgmk5d',
-        clientSecret: 'ggevn2508u5p7oaf0ep80ct07bc62ej8ksef4nti70khl1annup',
-        callbackURL: 'http://localhost:3000/auth/cognito/callback'
-
-    },
-    function(issuer, audience, profile, cb) {
-        //not interested in passport profile normalization,
-        //just the Auth0's original profile that is inside the _json field
-        return cb(null, profile._json);
-    }));
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// passport.use(new OpenIDCognitoStrategy({
+//         domain: 'api3.galesoftware.net',
+//         clientID: '1jn4n0sc7i3733mbn5rjfgmk5d',
+//         clientSecret: 'ggevn2508u5p7oaf0ep80ct07bc62ej8ksef4nti70khl1annup',
+//         callbackURL: 'http://localhost:3000/auth/cognito/callback'
+//
+//     },
+//     function(issuer, audience, profile, cb) {
+//         //not interested in passport profile normalization,
+//         //just the Auth0's original profile that is inside the _json field
+//         return cb(null, profile._json);
+//     }));
+//
 
 
 
@@ -99,8 +81,6 @@ const getPublicKey = () => {
 // 4: use jwks-rsa to get the signing key (kid found in header of jwt).
 // 5: use signing key to validate the jwt.
 
-
-
 const opts = {}
 opts.jwtFromRequest = accessTokenExtractor();
 opts.secretOrKey = getPublicKey();
@@ -118,6 +98,13 @@ nunjucks.configure([
 });
 app.set('view engine', 'njk');
 
+app.use(cookieSession({
+    name: 'session',
+    keys: ['!bwjkslkekhdfjlk$'],
+    maxAge: 1 * 60 * 60 * 1000 // 1 hour
+}));
+
+app.use(passport.initialize());
 
 const options = {
     // callbackURL: 'https://auw1xbwwy4.execute-api.eu-west-1.amazonaws.com/prod/auth/cognito/callback',
@@ -134,13 +121,8 @@ function verify(accessToken, refreshToken, profile, done) {
     done(null, profile);
 }
 
-app.use(cookieSession({
-    name: 'session',
-    keys: ['!bwjkslkekhdfjlk$'],
-    maxAge: 1 * 60 * 60 * 1000 // 1 hour
-}));
+passport.use(new OAuth2CognitoStrategy(options, verify));
 
-// passport.use(new OAuth2CognitoStrategy(options, verify));
 passport.serializeUser((user, done) => {
     console.log('user is in serialize' + JSON.stringify(user));
     return done(null, user);
