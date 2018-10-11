@@ -18,11 +18,12 @@ const jwksClient = require('jwks-rsa');
 const jwt = require('jsonwebtoken');
 
 
+app.use(passport.initialize());
 
 passport.use(new OpenIDCognitoStrategy({
-        domain: 'https://api3.galesoftware.net',
-        clientID: '5kluu0kr96sj93g78h8fueqhuq',
-        clientSecret: process.env.AUTH0_CLIENT_SECRET,
+        domain: 'api3.galesoftware.net',
+        clientID: '1jn4n0sc7i3733mbn5rjfgmk5d',
+        clientSecret: 'ggevn2508u5p7oaf0ep80ct07bc62ej8ksef4nti70khl1annup',
         callbackURL: 'http://localhost:3000/auth/cognito/callback'
 
     },
@@ -139,8 +140,7 @@ app.use(cookieSession({
     maxAge: 1 * 60 * 60 * 1000 // 1 hour
 }));
 
-app.use(passport.initialize());
-passport.use(new OAuth2CognitoStrategy(options, verify));
+// passport.use(new OAuth2CognitoStrategy(options, verify));
 passport.serializeUser((user, done) => {
     console.log('user is in serialize' + JSON.stringify(user));
     return done(null, user);
@@ -185,7 +185,9 @@ router.get('/', (req, res) => {
 })
 
 router.get('/login',
-    passport.authenticate('oauth2-cognito')
+    // passport.authenticate('oauth2-cognito')
+    // passport.authenticate('cognito-oidc')
+    passport.authenticate('cognito-oauth2')
 );
 
 router.get('/logout', function(req, res){
@@ -195,8 +197,9 @@ router.get('/logout', function(req, res){
 });
 
 app.get('/auth/cognito/callback',
-    passport.authenticate('oauth2-cognito'),
-    function(req, res) {
+    passport.authenticate('cognito-oauth2'),
+    // passport.authenticate('cognito-oidc'),
+function(req, res) {
         // Successful authentication, redirect home.
         console.log('successful authentication ' + JSON.stringify(req.session));
         console.log('am i auth:  ' + req.isAuthenticated());

@@ -24,7 +24,7 @@ var OpenIDConnectStrategy = require('passport-openidconnect').Strategy;
 function Strategy(options, verify) {
     ['domain',
         'clientID',
-        'clientSecret',
+        // 'clientSecret',
         'callbackURL'].forEach(function (k) {
         if(!options[k]){
             throw new Error('You must provide the ' + k + ' configuration value to use passport-cognito-oidc.');
@@ -32,10 +32,11 @@ function Strategy(options, verify) {
     });
 
     options = xtend({}, options, {
-        issuer:           'https://' + options.domain + '/',
-        authorizationURL: 'https://' + options.domain + '/authorize',
-        tokenURL:         'https://' + options.domain + '/oauth/token',
-        userInfoURL:      'https://' + options.domain + '/userinfo'
+        // issuer:           'https://' + options.domain + '/',
+        issuer:           'https://cognito-idp.eu-west-1.amazonaws.com/eu-west-1_q4XNRono4',
+        authorizationURL: 'https://' + options.domain + '/oauth2/authorize',
+        tokenURL:         'https://' + options.domain + '/oauth2/token',
+        userInfoURL:      'https://' + options.domain + '/oauth2/userInfo'
     });
 
     OpenIDConnectStrategy.call(this, options, verify);
