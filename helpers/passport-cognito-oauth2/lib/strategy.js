@@ -111,12 +111,16 @@ util.inherits(Strategy, OAuth2Strategy);
 
 
 Strategy.prototype.userProfile = function(accessToken, done) {
+    this._oauth2.useAuthorizationHeaderforGET(true);
     this._oauth2.get(this.options.userInfoURL, accessToken, function (err, body, res) {
         if (err) { return done(new Error('failed to fetch user profile', err)); }
 
         try {
             var json = JSON.parse(body);
-            var profile = new Profile(json, body);
+            const profile = {};
+            profile.json = json;
+            profile.accessToken = accessToken;
+            // var profile = new Profile(json, body);
 
             done(null, profile);
         } catch(e) {
