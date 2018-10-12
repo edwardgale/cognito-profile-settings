@@ -40,7 +40,11 @@ const jwt = require('jsonwebtoken');
 
 
 const accessTokenExtractor = function (req, res) {
-       return req.user.accessToken;
+    if (req.isAuthenticated()) {
+        return req.user.accessToken;
+    }
+
+    return '';
 };
 
 const isAuthenticated = function(req, res, next) {
@@ -52,22 +56,31 @@ const isAuthenticated = function(req, res, next) {
 };
 
 const isBlah = function(req, res, next) {
-    console.log('hello');
+        console.log('hello');
         const token = accessTokenExtractor(req, res);
         const decodedToken = jwt.decode(token, {complete: true});
-            const iss = decodedToken.iss;
+        const jwtPayload = decodedToken.payload;
+        const jwtHeader = decodedToken.header;
+        const iss = jwtPayload.iss;
         const options ={};
         options.jwksUri = `${iss}/.well-known/jwks.json`;
+        console.log(options.jwksUri);
         options.cache = true;
         options.rateLimit = true;
         const client = jwksClient(options);
-        const kid = 'kL9wvUP8Io6xp/h1MBOquivPpT2UfeVh06eQBaaaAV0=';
-        client.getSigningKey(kid, (err, key) => {
-            const signingKey = key.publicKey || key.rsaPublicKey;
-            // Now I can use this to configure my Express or Hapi middleware
-        });
+        const kid = jwtHeader.kid;
+        console.log(jwtHeader);
+        client.getSigningKey(kid+'234', (err, key) => {
+            if (err) { return next(new Error('failed to get the signing key', err)); }
 
-    return next();
+            const signingKey = key.publicKey || key.rsaPublicKey;
+            console.log(signingKey);
+            // verify token
+            var decoded = jwt.verify(token, signingKey);
+            console.log(decoded);
+
+            return next();
+        });
 };
 
 // const getPublicKey = () => {
@@ -123,6 +136,7 @@ const options = {
     logoutCallbackURL: 'http://localhost:3000/login',
     clientDomain: 'https://api3.galesoftware.net',
     clientID: '5kluu0kr96sj93g78h8fueqhuq',
+    state: 'statehere',
     // clientSecret: 'shhh-its-a-secret',
     region: 'eu-west-1'
 };
@@ -166,7 +180,11 @@ router.use((req, res, next)  => {
     console.log('is authenticated:', JSON.stringify(req.isAuthenticated()));
     console.log('Cookies: ', req.cookies);
     console.log('Uswer: ', req.user);
-    console.log(isBlah(req, res, next));
+
+    if (req.isAuthenticated()) {
+        isBlah(req, res, next)
+        console.log();
+    }
     // console.log('is user:', JSON.stringify(req.user()));
     next();
 })

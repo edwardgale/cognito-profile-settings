@@ -58,7 +58,7 @@ const util = require('util')
  * @api public
  */
 
-function Strategy({clientDomain, clientID, clientSecret, callbackURL, passReqToCallback, region}, verify) {
+function Strategy({clientDomain, clientID, clientSecret, callbackURL, passReqToCallback, region, state}, verify) {
   this.options = {
     authorizationURL: `${clientDomain}/oauth2/authorize`,
     userInfoURL: `${clientDomain}/oauth2/userInfo`,
@@ -66,6 +66,7 @@ function Strategy({clientDomain, clientID, clientSecret, callbackURL, passReqToC
       clientID,
     clientSecret,
     callbackURL,
+    // state,
     passReqToCallback
   };
 
