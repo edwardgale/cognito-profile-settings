@@ -1,0 +1,28 @@
+# serverless.yml
+
+service: my-express-application
+
+plugins:
+- serverless-apigw-binary
+
+custom:
+  apigwBinary:
+    types:
+    - '*/*'
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+  stage: dev
+  region: eu-west-1
+
+functions:
+  app:
+    handler: lambda.handler
+    events:
+    - http:
+        path: /
+        method: ANY
+        cors: true
+    - http: 'ANY {proxy+}'
+
