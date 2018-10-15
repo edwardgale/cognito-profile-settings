@@ -17,7 +17,7 @@ const JwtStrategy = require('passport-jwt').Strategy;
 const ExtractJwt = require('passport-jwt').ExtractJwt;
 const jwksClient = require('jwks-rsa');
 const jwt = require('jsonwebtoken');
-
+const tokenVvalidator = require('./middleware/token-validator');
 
 
 // passport.use(new OpenIDCognitoStrategy({
@@ -55,33 +55,7 @@ const isAuthenticated = function(req, res, next) {
     }
 };
 
-const isBlah = function(req, res, next) {
-        console.log('hello');
-        const token = accessTokenExtractor(req, res);
-        const decodedToken = jwt.decode(token, {complete: true});
-        const jwtPayload = decodedToken.payload;
-        const jwtHeader = decodedToken.header;
-        const iss = jwtPayload.iss;
-        const options ={};
-        options.jwksUri = `${iss}/.well-known/jwks.json`;
-        console.log(options.jwksUri);
-        options.cache = true;
-        options.rateLimit = true;
-        const client = jwksClient(options);
-        const kid = jwtHeader.kid;
-        console.log(jwtHeader);
-        client.getSigningKey(kid+'234', (err, key) => {
-            if (err) { return next(new Error('failed to get the signing key', err)); }
 
-            const signingKey = key.publicKey || key.rsaPublicKey;
-            console.log(signingKey);
-            // verify token
-            var decoded = jwt.verify(token, signingKey);
-            console.log(decoded);
-
-            return next();
-        });
-};
 
 // const getPublicKey = () => {
 //     return function (req) {
@@ -158,6 +132,8 @@ passport.deserializeUser((obj, done) => {
 });
 
 app.use(passport.session());
+app.use(tokenVvalidator());
+
 
 if (process.env.NODE_ENV === 'test') {
   // NOTE: aws-serverless-express uses this app for its integration tests
@@ -181,15 +157,13 @@ router.use((req, res, next)  => {
     console.log('Cookies: ', req.cookies);
     console.log('Uswer: ', req.user);
 
-    if (req.isAuthenticated()) {
-        isBlah(req, res, next)
-        console.log();
-    }
+
     // console.log('is user:', JSON.stringify(req.user()));
     next();
 })
 
 router.get('/', (req, res) => {
+    console.log('getting the home route');
   res.render('index', {
     apiUrl: req.apiGateway ? `https://${req.apiGateway.event.headers.Host}/${req.apiGateway.event.requestContext.stage}` : 'http://localhost:3000'
   })
